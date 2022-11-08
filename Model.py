@@ -10,17 +10,17 @@ from keras.utils.vis_utils import plot_model
 
 from functools import partial
 
-gpus = tf.config.list_physical_devices('GPU')
-if gpus:
-    try:
-    # Currently, memory growth needs to be the same across GPUs
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
-        logical_gpus = tf.config.list_logical_devices('GPU')
-        print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
-    except RuntimeError as e:
-        # Memory growth must be set before GPUs have been initialized
-        print(e)
+# gpus = tf.config.list_physical_devices('GPU')
+# if gpus:
+#     try:
+#     # Currently, memory growth needs to be the same across GPUs
+#         for gpu in gpus:
+#             tf.config.experimental.set_memory_growth(gpu, True)
+#         logical_gpus = tf.config.list_logical_devices('GPU')
+#         print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+#     except RuntimeError as e:
+#         # Memory growth must be set before GPUs have been initialized
+#         print(e)
 
 
 #Generate dict to add info and hiperparameters
@@ -144,6 +144,17 @@ def dice_coefficient(y_true, y_pred, smooth=0.00001):
 def dice_coefficient_loss(y_true, y_pred):
     return -dice_coefficient(y_true, y_pred)
 
+# Jaccard Index
+def jacard_coef(y_true, y_pred):
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f)
+    return (intersection + 1.0) / (K.sum(y_true_f) + K.sum(y_pred_f) - intersection + 1.0)
+
+def jacard_coef_loss(y_true, y_pred):
+    return -jacard_coef(y_true, y_pred)
+
+
 # Countour loss
 def contour_loss(y_true, y_pred):  
     sobelFilters = K.variable([ 
@@ -170,20 +181,6 @@ def contour_loss(y_true, y_pred):
     finalChamferDistanceSum = K.sum(contour_f * y_true_f, axis=1, keepdims=True)
 
     return K.mean(finalChamferDistanceSum)
-
-
-# Jaccard Index
-def jacard_coef(y_true, y_pred):
-    y_true_f = K.flatten(y_true)
-    y_pred_f = K.flatten(y_pred)
-    intersection = K.sum(y_true_f * y_pred_f)
-    return (intersection + 1.0) / (K.sum(y_true_f) + K.sum(y_pred_f) - intersection + 1.0)
-
-
-def jacard_coef_loss(y_true, y_pred):
-    return -jacard_coef(y_true, y_pred)
-
-
 
 
 # Model
