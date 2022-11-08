@@ -7,9 +7,6 @@ import numpy as np
 from Model import config
 
 
-
-# by Zihao Wang.
-
 class image_augmentation:
     def __init__(self, X, Y):
         self.X = np.squeeze(X)
