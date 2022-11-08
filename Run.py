@@ -1,15 +1,18 @@
-
+# Import libraries
 from functools import partial
 import os
 import sys
 import numpy as np
 import glob
 import SimpleITK as sitk
+from sklearn.model_selection import KFold
+
 from Model import unet3d
 from Model import config
+
 import tensorflow as tf
-from sklearn.model_selection import KFold
 tf.config.run_functions_eagerly(True)
+from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, LearningRateScheduler, ReduceLROnPlateau, EarlyStopping
 
 
 def resampling(img, size=config["image_shape"], is_mask=0):
@@ -50,17 +53,19 @@ def get_training_datasets(data_folder, label= config["labels"], is_truth_mask = 
 data_folder = config["data_folder"]
 imgs, segs, subjects = get_training_datasets(data_folder)
 
-gpus = tf.config.list_physical_devices('GPU')
-if gpus:
-    try:
-    # Currently, memory growth needs to be the same across GPUs
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
-        logical_gpus = tf.config.list_logical_devices('GPU')
-        print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
-    except RuntimeError as e:
-        # Memory growth must be set before GPUs have been initialized
-        print(e)
+# Check gpus available
+
+# gpus = tf.config.list_physical_devices('GPU')
+# if gpus:
+#     try:
+#     # Currently, memory growth needs to be the same across GPUs
+#         for gpu in gpus:
+#             tf.config.experimental.set_memory_growth(gpu, True)
+#         logical_gpus = tf.config.list_logical_devices('GPU')
+#         print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+#     except RuntimeError as e:
+#         # Memory growth must be set before GPUs have been initialized
+#         print(e)
 
 # Validation split
 ids = np.random.permutation(len(segs))
@@ -95,21 +100,7 @@ import Augmentor
 gen = Augmentor.image_augmentation(training_imgs,training_segs).aug_train_iterator()
 
 
-'''
-img, seg = next(gen)
-
-import matplotlib.pyplot as plt
-
-plt.imshow(img[0,0,:,:,:])
-plt.show()
-plt.imshow(seg[0,0,:,:,:])
-plt.show()
-'''
-
-
 # Training
-
-from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, LearningRateScheduler, ReduceLROnPlateau, EarlyStopping
 
 def get_callbacks(model_file, initial_learning_rate=0.0001, learning_rate_drop=0.5, learning_rate_epochs=None,
                   learning_rate_patience=50, logging_file="training.log", verbosity=1,
@@ -128,9 +119,6 @@ def get_callbacks(model_file, initial_learning_rate=0.0001, learning_rate_drop=0
     return callbacks
 
 model_file = config["model_file"] 
-
-
-
 
 model.fit_generator(generator=gen, epochs=config["n_epochs"], verbose=1, steps_per_epoch=config["steps_per_epoch"],
                         validation_data=(testing_imgs,testing_segs),
