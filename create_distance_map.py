@@ -24,3 +24,5 @@ def run_create_distance_map(data_folder):
 data_folder = config["data_folder"]
 run_create_distance_map(data_folder)
 
+data_folder
+
